@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${detail.summary().title()})}"></head>
+<body>
+<header th:replace="~{fragments :: topbar(${user})}"></header>
+<main class="page narrow" th:with="r=${detail.summary()}">
+  <div th:replace="~{fragments :: messages}"></div>
+
+  <div class="page-head">
+    <h1 th:text="${r.title()}">Title</h1>
+    <span th:replace="~{fragments :: statuses(${r})}"></span>
+  </div>
+
+  <p class="alert warn small" th:if="${r.permissionTone() == 'warn'}">
+    Permission has not been granted yet. The event may not go ahead until it is approved.
+  </p>
+  <p class="alert error small" th:if="${r.rejectionReason() != null}"
+     th:text="'Rejected: ' + ${r.rejectionReason()}">Rejected: reason</p>
+
+  <section class="card">
+    <dl class="facts">
+      <dt>Club</dt><dd th:text="${r.clubName()}">Club</dd>
+      <dt>Venue</dt><dd th:text="${r.venueName()} + ' (seats ' + ${r.venueCapacity()} + ')'">Venue</dd>
+      <dt>When</dt><dd th:text="${r.dateLabel()} + ', ' + ${r.timeLabel()}">Date, time</dd>
+      <dt>Type</dt><dd th:text="${r.eventTypeLabel()}">Type</dd>
+      <dt>Expected attendance</dt>
+      <dd th:text="${r.expectedAttendance() != null ? r.expectedAttendance() : 'Not given'}">120</dd>
+      <dt>Submitted</dt><dd th:text="${detail.submittedLabel()} + ' by ' + ${detail.submittedByName()}">When by whom</dd>
+      <dt>Current stage</dt><dd th:text="${r.statusLabel()} + ' (waiting ' + ${r.waitingLabel()} + ')'">Stage</dd>
+    </dl>
+    <h2>Proposal</h2>
+    <p class="proposal" th:text="${detail.description()}">Description</p>
+  </section>
+
+  <section class="card" th:if="${r.canDecide()}">
+    <h2>Your decision</h2>
+    <div class="actions">
+      <form th:action="@{/review/{id}/approve(id=${r.id()})}" method="post">
+        <input type="hidden" name="returnTo" th:value="'/requests/' + ${r.id()}">
+        <button type="submit" class="primary">Approve</button>
+      </form>
+      <form th:action="@{/review/{id}/reject(id=${r.id()})}" method="post" class="reject-form">
+        <input type="hidden" name="returnTo" th:value="'/requests/' + ${r.id()}">
+        <input type="text" name="reason" maxlength="500" required placeholder="Reason for rejecting">
+        <button type="submit" class="danger">Reject</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>History</h2>
+    <ol class="history">
+      <li th:each="h : ${detail.history()}">
+        <span class="muted" th:text="${h.whenLabel()}">When</span>
+        <strong th:text="${h.actorName()}">Who</strong>
+        <span th:text="${h.actionLabel()}">did</span>
+        <span class="muted" th:if="${h.fromLabel() != null and h.fromLabel() != h.toLabel()}"
+              th:text="'(' + ${h.fromLabel()} + ' → ' + ${h.toLabel()} + ')'">(from → to)</span>
+        <div class="remark" th:if="${h.remark() != null}" th:text="'“' + ${h.remark()} + '”'">Remark</div>
+      </li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

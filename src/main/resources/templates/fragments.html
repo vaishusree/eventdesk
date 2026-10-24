@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Shared pieces. Pages include them with th:replace="~{fragments :: name(...)}". -->
+<head th:fragment="head(title)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · EventDesk'">EventDesk</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<header th:fragment="topbar(user)" class="topbar">
+    <nav class="nav">
+        <a class="brand" th:href="@{/}">EventDesk</a>
+        <a th:href="@{/calendar}">Calendar</a>
+        <th:block th:if="${user.club}">
+            <a th:href="@{/club/requests}">My requests</a>
+            <a th:href="@{/club/requests/new}">New request</a>
+        </th:block>
+        <a th:unless="${user.club}" th:href="@{/review}">Review queue</a>
+    </nav>
+    <div class="who">
+        <span th:text="${user.clubName != null ? user.clubName : user.displayName}">Name</span>
+        <span class="badge" th:text="${user.roleLabel}">Role</span>
+        <form th:action="@{/logout}" method="post" class="inline">
+            <button type="submit" class="link">Sign out</button>
+        </form>
+    </div>
+</header>
+
+<!-- Success / error messages carried over a redirect (flash attributes) or set on the page. -->
+<div th:fragment="messages">
+    <p class="alert ok" th:if="${success}" th:text="${success}">Done.</p>
+    <p class="alert error" th:if="${error}" th:text="${error}">Something went wrong.</p>
+</div>
+
+<!-- Hall status and permission status side by side: a confirmed hall is not permission. -->
+<span th:fragment="statuses(r)" class="statuses">
+    <span class="tag" th:classappend="${r.hallTone()}" th:text="${r.hallLabel()}">Hall</span>
+    <span class="tag" th:classappend="${r.permissionTone()}" th:text="${r.permissionLabel()}">Permission</span>
+    <span class="tag bad" th:if="${r.escalated()}">Escalated</span>
+    <span class="tag warn" th:if="${r.overdue() and !r.escalated()}">Overdue</span>
+</span>
+
+<!-- One request in a review queue, with approve / reject when this reviewer may decide. -->
+<li th:fragment="reviewItem(r, returnTo)" class="row stacked">
+    <div class="row-main">
+        <div class="what">
+            <a th:href="@{/requests/{id}(id=${r.id()})}"><strong th:text="${r.title()}">Title</strong></a>
+            <span class="muted"
+                  th:text="${r.clubName()} + ' · ' + ${r.venueName()} + ' · ' + ${r.dateLabel()} + ' · ' + ${r.timeLabel()}">Club · venue · date · time</span>
+            <span class="muted small" th:text="'Waiting ' + ${r.waitingLabel()} + ' at this stage'">Waiting 2 days</span>
+        </div>
+        <span th:replace="~{fragments :: statuses(${r})}"></span>
+    </div>
+    <p class="alert info small" th:if="${r.overCapacity()}"
+       th:text="'Expected attendance (' + ${r.expectedAttendance()} + ') is more than the venue seats (' + ${r.venueCapacity()} + ').'">Over capacity</p>
+    <div class="actions" th:if="${r.canDecide()}">
+        <form th:action="@{/review/{id}/approve(id=${r.id()})}" method="post">
+            <input type="hidden" name="returnTo" th:value="${returnTo}">
+            <button type="submit" class="primary">Approve</button>
+        </form>
+        <form th:action="@{/review/{id}/reject(id=${r.id()})}" method="post" class="reject-form">
+            <input type="hidden" name="returnTo" th:value="${returnTo}">
+            <input type="text" name="reason" maxlength="500" required placeholder="Reason for rejecting (the club will see this)">
+            <button type="submit" class="danger">Reject</button>
+        </form>
+    </div>
+</li>
+
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('My requests')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar(${user})}"></header>
+<main class="page">
+    <div class="page-head">
+        <h1>My requests</h1>
+        <a class="primary button" th:href="@{/club/requests/new}">New request</a>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <p class="empty" th:if="${requests.isEmpty()}">
+        Your club hasn't submitted any requests yet.
+        <a th:href="@{/club/requests/new}">Submit the first one</a>.
+    </p>
+
+    <ul class="rows">
+        <li class="row stacked" th:each="r : ${requests}">
+            <div class="row-main">
+                <div class="what">
+                    <a th:href="@{/requests/{id}(id=${r.id()})}"><strong th:text="${r.title()}">Title</strong></a>
+                    <span class="muted"
+                          th:text="${r.venueName()} + ' · ' + ${r.dateLabel()} + ' · ' + ${r.timeLabel()}">Venue · date · time</span>
+                </div>
+                <span th:replace="~{fragments :: statuses(${r})}"></span>
+            </div>
+
+            <p class="alert warn small" th:if="${r.permissionTone() == 'warn'}">
+                Permission has not been granted yet. Don't hold the event until it is approved.
+            </p>
+            <p class="alert error small" th:if="${r.rejectionReason() != null}"
+               th:text="'Rejected: ' + ${r.rejectionReason()}">Rejected: reason</p>
+            <p class="alert info small" th:if="${r.overCapacity()}"
+               th:text="'Expected attendance (' + ${r.expectedAttendance()} + ') is more than ' + ${r.venueName()} + ' seats (' + ${r.venueCapacity()} + '). You may need another venue.'">
+                Over capacity
+            </p>
+
+            <div class="actions" th:if="${r.canCancel() or r.canRemind()}">
+                <form th:if="${r.canRemind()}" th:action="@{/club/requests/{id}/remind(id=${r.id()})}" method="post">
+                    <button type="submit" class="secondary">Send reminder</button>
+                </form>
+                <form th:if="${r.canCancel()}" th:action="@{/club/requests/{id}/cancel(id=${r.id()})}" method="post"
+                      onsubmit="return confirm('Cancel this request? The venue slot will be released.');">
+                    <button type="submit" class="danger">Cancel request</button>
+                </form>
+            </div>
+        </li>
+    </ul>
+</main>
+</body>
+</html>

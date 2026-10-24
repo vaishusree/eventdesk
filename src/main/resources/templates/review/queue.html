@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Review queue')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar(${user})}"></header>
+<main class="page">
+    <h1 th:text="${queue.heading()}">Requests</h1>
+    <p class="muted" th:text="${queue.explanation()}">What to do here.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <p class="empty" th:if="${queue.toDecide().isEmpty()}">Nothing waiting for you right now.</p>
+    <ul class="rows">
+        <!-- th:each sits on a wrapper: Thymeleaf runs th:replace before th:each on the same element. -->
+        <th:block th:each="r : ${queue.toDecide()}">
+            <li th:replace="~{fragments :: reviewItem(${r}, '/review')}"></li>
+        </th:block>
+    </ul>
+
+    <section th:if="${queue.watchHeading() != null and !queue.toWatch().isEmpty()}" class="watch">
+        <h2 th:text="${queue.watchHeading()}">Stuck elsewhere</h2>
+        <p class="muted">
+            Overdue or close to the event at the previous stage. You can't decide these yet,
+            but you may want to follow up with the office. The backup approver can step in once they are escalated.
+        </p>
+        <ul class="rows">
+            <th:block th:each="r : ${queue.toWatch()}">
+                <li th:replace="~{fragments :: reviewItem(${r}, '/review')}"></li>
+            </th:block>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

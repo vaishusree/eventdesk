@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Sign in')}"></head>
+<body>
+<main class="auth">
+    <section class="card">
+        <h1>EventDesk</h1>
+        <p class="muted">Venue booking and event approval for college clubs.</p>
+
+        <p class="alert error" th:if="${param.error}">Wrong email or password.</p>
+        <p class="alert info" th:if="${param.logout}">You have been signed out.</p>
+
+        <form th:action="@{/login}" method="post" class="stack">
+            <label>Email
+                <input type="email" name="email" autocomplete="username" required autofocus>
+            </label>
+            <label>Password
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit" class="primary">Sign in</button>
+        </form>
+    </section>
+
+    <section class="card" th:if="${demoAccounts != null}">
+        <h2>Try a demo account</h2>
+        <p class="muted">
+            One click signs you in. Every demo account uses the password
+            <code th:text="${demoPassword}">demo1234</code>.
+        </p>
+        <ul class="demo-list">
+            <li th:each="account : ${demoAccounts}">
+                <form th:action="@{/login}" method="post">
+                    <input type="hidden" name="email" th:value="${account.email()}">
+                    <input type="hidden" name="password" th:value="${demoPassword}">
+                    <button type="submit" class="demo">
+                        <span th:text="${account.name()}">Name</span>
+                        <span class="badge" th:text="${account.roleLabel()}">Role</span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

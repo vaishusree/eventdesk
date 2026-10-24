@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Used by Spring Boot for every error (404, 403, 500…) and by WebExceptionHandler. -->
+<head th:replace="~{fragments :: head('Error')}"></head>
+<body>
+<main class="auth">
+    <section class="card">
+        <h1 th:text="${status} + ' · ' + ${error}">404 · Not found</h1>
+        <p th:if="${message != null and !#strings.isEmpty(message)}" th:text="${message}">What went wrong.</p>
+        <p th:if="${status == 403 and (message == null or #strings.isEmpty(message))}">
+            Your role can't open this page.
+        </p>
+        <p><a th:href="@{/}">Back to EventDesk</a></p>
+    </section>
+</main>
+</body>
+</html>

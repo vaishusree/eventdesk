@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Calendar')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar(${user})}"></header>
+<main class="page">
+    <h1>Venue calendar</h1>
+    <p class="muted">
+        Every club's bookings, so you can see what's free before you ask.
+        A tentatively held hall is waiting for the hall reservation office.
+        Only <strong>Permission granted</strong> means the event may go ahead.
+    </p>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <p class="empty" th:if="${days.isEmpty()}">No upcoming bookings.</p>
+
+    <section class="day" th:each="day : ${days}">
+        <h2 th:text="${day.dateLabel()}">Thu 26 Nov 2026</h2>
+        <ul class="rows">
+            <li class="row" th:each="r : ${day.bookings()}">
+                <div class="when" th:text="${r.timeLabel()}">10:00 – 13:00</div>
+                <div class="what">
+                    <strong th:text="${r.venueName()}">Seminar Hall A</strong>
+                    <span class="muted" th:text="${r.title()} + ' · ' + ${r.clubName()}">Title · Club</span>
+                </div>
+                <span th:replace="~{fragments :: statuses(${r})}"></span>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>
