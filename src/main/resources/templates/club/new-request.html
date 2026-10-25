@@ -40,6 +40,14 @@
             </label>
         </div>
 
+        <!-- Shown when the type is Other (the script below hides it otherwise). -->
+        <label id="other-kind">What kind of event?
+            <input type="text" th:field="*{eventTypeDetail}" maxlength="60"
+                   placeholder="e.g. Alumni meet, sports day, blood donation camp">
+            <span class="hint">Needed when the event type is Other, so reviewers know what it is.</span>
+            <span class="field-error" th:if="${#fields.hasErrors('eventTypeDetail')}" th:errors="*{eventTypeDetail}"></span>
+        </label>
+
         <label>Venue
             <select th:field="*{venueId}" required>
                 <option value="">Choose…</option>
@@ -91,5 +99,16 @@
         </div>
     </form>
 </main>
+<script>
+    // Show "What kind of event?" only for type Other. Without JavaScript the field just stays visible.
+    (function () {
+        var type = document.getElementById('eventType');
+        var kind = document.getElementById('other-kind');
+        if (!type || !kind) return;
+        function sync() { kind.hidden = type.value !== 'OTHER'; }
+        type.addEventListener('change', sync);
+        sync();
+    })();
+</script>
 </body>
 </html>

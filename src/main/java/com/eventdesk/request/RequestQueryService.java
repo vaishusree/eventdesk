@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
+import java.time.YearMonth;
 /**
  * Read side: turns requests into page-ready summaries. Kept apart from
  * EventRequestService, which only changes data. readOnly lets the database
@@ -64,19 +64,54 @@ public class RequestQueryService {
      * sees every booking: this is what replaces emailing the office to ask.
      * Pending requests whose start has passed are left out (they're expired).
      */
-    public List<CalendarDay> calendar() {
+    /**
+     * One month of the shared calendar, optionally for a single venue. Every
+     * club sees every booking: this is what replaces emailing the office to
+     * ask. Pending requests whose start has passed are left out (expired).
+     * Clubs can open only their own requests, so other clubs' chips aren't links.
+     */
+    public CalendarView calendar(YearMonth month, Long venueId, long viewerId) {
+        AppUser viewer = findUser(viewerId);
         Instant now = clock.instant();
+        Instant from = MonthGrid.firstVisibleDay(month).atStartOfDay(zone).toInstant();
+        Instant to = MonthGrid.lastVisibleDay(month).plusDays(1).atStartOfDay(zone).toInstant();
+
+        List<MonthGrid.Booking> bookings = new ArrayList<>();
         Map<String, List<RequestSummary>> byDate = new LinkedHashMap<>();
-        for (EventRequest request : requests.findByStatusInAndEndsAtAfterOrderByStartsAtAsc(HOLDING, now)) {
-            if (request.isExpired(now)) {
+        for (EventRequest request : requests.findByStatusInAndStartsAtBeforeAndEndsAtAfterOrderByStartsAtAsc(HOLDING, to, from)) {
+            if (request.isExpired(now) || (venueId != null && !venueId.equals(request.getVenue().getId()))) {
                 continue;
             }
             RequestSummary summary = summarize(request, null, now);
-            byDate.computeIfAbsent(summary.dateLabel(), d -> new ArrayList<>()).add(summary);
+            bookings.add(toBooking(request, summary, viewer));
+            if (YearMonth.from(request.getStartsAt().atZone(zone)).equals(month)) {
+                byDate.computeIfAbsent(summary.dateLabel(), d -> new ArrayList<>()).add(summary);
+            }
         }
-        List<CalendarDay> days = new ArrayList<>();
-        byDate.forEach((date, bookings) -> days.add(new CalendarDay(date, bookings)));
-        return days;
+        List<CalendarDay> agenda = new ArrayList<>();
+        byDate.forEach((date, list) -> agenda.add(new CalendarDay(date, list)));
+
+        LocalDate today = LocalDate.now(clock.withZone(zone));
+        return new CalendarView(MonthGrid.of(month, today, bookings), agenda, venueId, YearMonth.from(today));
+    }
+
+    /** The month the calendar opens on: the one with the next booking, or this month if there is none. */
+    public YearMonth defaultCalendarMonth() {
+        Instant now = clock.instant();
+        return requests.findFirstByStatusInAndEndsAtAfterOrderByStartsAtAsc(HOLDING, now)
+                .map(r -> r.getStartsAt().isBefore(now) ? now : r.getStartsAt())
+                .map(start -> YearMonth.from(start.atZone(zone)))
+                .orElse(YearMonth.now(clock.withZone(zone)));
+    }
+
+    private MonthGrid.Booking toBooking(EventRequest request, RequestSummary summary, AppUser viewer) {
+        ZonedDateTime start = request.getStartsAt().atZone(zone);
+        // An event ending exactly at midnight doesn't occupy the next day.
+        LocalDate lastDay = request.getEndsAt().minusNanos(1).atZone(zone).toLocalDate();
+        boolean linkable = viewer.getRole() != Role.CLUB || request.isOwnedBy(viewer);
+        MonthGrid.Entry entry = new MonthGrid.Entry(request.getId(), summary.title(), summary.clubName(),
+                summary.venueName(), TIME.format(start), summary.permissionTone(), false, linkable);
+        return new MonthGrid.Booking(start.toLocalDate(), lastDay, entry);
     }
 
     /** The signed-in coordinator's club's requests, with the actions they may take. */
@@ -225,7 +260,7 @@ public class RequestQueryService {
                 request.getClub().getName(),
                 request.getVenue().getName(),
                 request.getVenue().getCapacity(),
-                request.getEventType().label(),
+                request.eventTypeLabel(),
                 request.getExpectedAttendance(),
                 DATE.format(start),
                 timeLabel,
@@ -243,7 +278,9 @@ public class RequestQueryService {
                 owner && request.canRemind(viewer, now),
                 viewer != null && request.canBeReviewedBy(viewer, now),
                 waitingLabel(request.timeInCurrentStatus(now)),
-                request.getRejectionReason());
+                request.getRejectionReason(),
+                request.getVenue().getId(),
+                YearMonth.from(start).toString());
     }
 
     private static String toneOf(HallStatus hall) {

@@ -8,6 +8,7 @@ import com.eventdesk.security.CurrentUser;
 import com.eventdesk.venue.VenueRepository;
 import jakarta.validation.Valid;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,8 +18,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -58,16 +61,29 @@ public class ClubRequestController {
         return "club/requests";
     }
 
+    /**
+     * The calendar links here with ?date=...&venue=... when a club clicks a
+     * day, so the form starts on that date and hall. A date before the
+     * 30-day notice limit is ignored rather than prefilled.
+     */
     @GetMapping("/new")
-    public String newForm(@AuthenticationPrincipal CurrentUser user, Model model) {
-        model.addAttribute("form", new NewRequestForm());
+    public String newForm(@AuthenticationPrincipal CurrentUser user,
+                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                          @RequestParam(required = false) Long venue,
+                          Model model) {
+        NewRequestForm form = new NewRequestForm();
+        if (date != null && !date.isBefore(queries.earliestEventDate())) {
+            form.setDate(date);
+        }
+        form.setVenueId(venue);
+        model.addAttribute("form", form);
         addFormOptions(user, model);
         return "club/new-request";
     }
 
     @PostMapping
     public String submit(@AuthenticationPrincipal CurrentUser user,
-                         @Valid @ModelAttribute("form") com.eventdesk.web.NewRequestForm form, BindingResult binding,
+                         @Valid @ModelAttribute("form") NewRequestForm form, BindingResult binding,
                          Model model, RedirectAttributes redirect) {
         if (binding.hasErrors()) {
             addFormOptions(user, model);

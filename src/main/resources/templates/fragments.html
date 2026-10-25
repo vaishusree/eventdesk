@@ -5,6 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title} + ' · EventDesk'">EventDesk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&display=swap">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -50,7 +53,8 @@
             <a th:href="@{/requests/{id}(id=${r.id()})}"><strong th:text="${r.title()}">Title</strong></a>
             <span class="muted"
                   th:text="${r.clubName()} + ' · ' + ${r.venueName()} + ' · ' + ${r.dateLabel()} + ' · ' + ${r.timeLabel()}">Club · venue · date · time</span>
-            <span class="muted small" th:text="'Waiting ' + ${r.waitingLabel()} + ' at this stage'">Waiting 2 days</span>
+            <a class="small" th:href="@{/calendar(month=${r.calendarMonth()}, venue=${r.venueId()})}"
+               th:text="'See ' + ${r.venueName()} + ' on the calendar'">See this hall on the calendar</a>
         </div>
         <span th:replace="~{fragments :: statuses(${r})}"></span>
     </div>

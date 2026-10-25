@@ -125,8 +125,10 @@ class PermissionPolicyTest {
         assertEquals(HallStatus.RELEASED, withdrawn.hallStatus(EVENT_START));
 
         EventDetails details = new EventDetails("Talk", "Guest talk", EventType.OTHER, null,
-                EVENT_START, EVENT_START.plus(Duration.ofHours(1)));
+                EVENT_START, EVENT_START.plus(Duration.ofHours(1)), null, "Guest lecture");
         EventRequest tentative = EventRequest.submit(coding, hall, details, SUBMITTED_AT);
         assertEquals(HallStatus.TENTATIVE, tentative.hallStatus(QUARTER_TO_TEN));
+
+
     }
 }

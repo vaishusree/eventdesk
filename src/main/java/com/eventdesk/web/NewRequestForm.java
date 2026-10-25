@@ -15,10 +15,11 @@ import java.time.ZoneId;
 /**
  * What the new-request form posts. Bean Validation catches missing or
  * malformed fields for a friendly per-field message; the business rules
- * (30-day notice, 12-hour limit, attendance by type) stay in EventRequest.
+ * (30-day notice, 12-hour limit, attendance by type, extended technical
+ * events) stay in EventRequest and OperatingHours.
  *
- * <p>An event is one date with a start and end time in the college's time
- * zone, so it can't run past midnight. That's a deliberate simplification.
+ * <p>Most events are one date with a start and end time. An optional end
+ * date covers events that run overnight, such as 24-hour hackathons.
  */
 public class NewRequestForm {
 
@@ -58,15 +59,17 @@ public class NewRequestForm {
     @Size(max = 100, message = "Keep the approval reference under 100 characters")
     private String departmentApprovalRef;
 
-    /** Converts the form's local date and times into instants in the college's time zone. */
-    /** Converts the form's local dates and times into instants in the college's time zone. */
+    /** Only for event type Other: what kind of event it is. */
+    @Size(max = 60, message = "Keep the kind of event under 60 characters")
+    private String eventTypeDetail;
+
     /** Converts the form's local dates and times into instants in the college's time zone. */
     public EventDetails toDetails(ZoneId zone) {
         LocalDate lastDay = endDate != null ? endDate : date;
         return new EventDetails(title, description, eventType, expectedAttendance,
                 date.atTime(startTime).atZone(zone).toInstant(),
                 lastDay.atTime(endTime).atZone(zone).toInstant(),
-                departmentApprovalRef);
+                departmentApprovalRef, eventTypeDetail);
     }
 
     public String getTitle() { return title; }
@@ -77,6 +80,9 @@ public class NewRequestForm {
 
     public EventType getEventType() { return eventType; }
     public void setEventType(EventType eventType) { this.eventType = eventType; }
+
+    public String getEventTypeDetail() { return eventTypeDetail; }
+    public void setEventTypeDetail(String eventTypeDetail) { this.eventTypeDetail = eventTypeDetail; }
 
     public Integer getExpectedAttendance() { return expectedAttendance; }
     public void setExpectedAttendance(Integer expectedAttendance) { this.expectedAttendance = expectedAttendance; }

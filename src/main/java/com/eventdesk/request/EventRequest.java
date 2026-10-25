@@ -55,6 +55,7 @@ public class EventRequest {
     /** Extended technical events (e.g. 24-hour hackathons) with department approval. */
     public static final Duration MAX_EXTENDED_DURATION = Duration.ofHours(36);
     static final int MAX_APPROVAL_REF_LENGTH = 100;
+    static final int MAX_TYPE_DETAIL_LENGTH = 60;
     static final int MAX_REMARK_LENGTH = 500;
     /** A pending request is overdue once it has waited this long at its current stage. */
     public static final Duration OVERDUE_AFTER = Duration.ofDays(2);
@@ -92,6 +93,9 @@ public class EventRequest {
     @Column(name = "event_type", nullable = false, length = 20)
     private EventType eventType;
 
+    /** What kind of event an "Other" event is, e.g. "Alumni meet". Null for every other type. */
+    @Column(name = "event_type_detail", length = MAX_TYPE_DETAIL_LENGTH)
+    private String eventTypeDetail;
     /** Null when not given (allowed only for types that don't require a head count). */
     @Column(name = "expected_attendance")
     private Integer expectedAttendance;
@@ -148,6 +152,7 @@ public class EventRequest {
         this.title = details.title().strip();
         this.description = details.description().strip();
         this.eventType = details.eventType();
+        this.eventTypeDetail = details.eventType() == EventType.OTHER ? details.eventTypeDetail().strip() : null;
         this.expectedAttendance = details.expectedAttendance();
         this.startsAt = details.startsAt();
         this.endsAt = details.endsAt();
@@ -179,6 +184,15 @@ public class EventRequest {
         }
         if (details.eventType() == null) {
             throw new InvalidRequestException("Please choose an event type");
+        }
+        if (details.eventType() == EventType.OTHER) {
+            if (isBlank(details.eventTypeDetail())) {
+                throw new InvalidRequestException("For an \"Other\" event, say what kind of event it is");
+            }
+            if (details.eventTypeDetail().strip().length() > MAX_TYPE_DETAIL_LENGTH) {
+                throw new InvalidRequestException("Keep the kind of event under "
+                        + MAX_TYPE_DETAIL_LENGTH + " characters");
+            }
         }
         if (details.startsAt() == null || details.endsAt() == null) {
             throw new InvalidRequestException("Please choose a start and end time");
@@ -513,6 +527,16 @@ public class EventRequest {
 
     public EventType getEventType() {
         return eventType;
+    }
+
+
+    public String getEventTypeDetail() {
+        return eventTypeDetail;
+    }
+
+    /** "Workshop", or for Other events what the club wrote, e.g. "Other: Alumni meet". */
+    public String eventTypeLabel() {
+        return eventTypeDetail == null ? eventType.label() : eventType.label() + ": " + eventTypeDetail;
     }
 
     public Integer getExpectedAttendance() {

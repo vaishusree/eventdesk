@@ -8,6 +8,8 @@ import java.time.Instant;
  * event types where {@link EventType#requiresAttendance()} is true.
  * {@code departmentApprovalRef} is only needed for extended technical events
  * (longer than 12 hours or outside campus hours, e.g. 24-hour hackathons).
+ * {@code eventTypeDetail} says what kind of event an "Other" event is (e.g.
+ * "Alumni meet"); it is required for Other and ignored for every other type.
  */
 public record EventDetails(
         String title,
@@ -16,13 +18,20 @@ public record EventDetails(
         Integer expectedAttendance,
         Instant startsAt,
         Instant endsAt,
-        String departmentApprovalRef
+        String departmentApprovalRef,
+        String eventTypeDetail
 ) {
 
     /** For standard events, which need no department approval reference. */
     public EventDetails(String title, String description, EventType eventType, Integer expectedAttendance,
                         Instant startsAt, Instant endsAt) {
-        this(title, description, eventType, expectedAttendance, startsAt, endsAt, null);
+        this(title, description, eventType, expectedAttendance, startsAt, endsAt, null, null);
+    }
+
+    /** For events that aren't of type Other, which need no type description. */
+    public EventDetails(String title, String description, EventType eventType, Integer expectedAttendance,
+                        Instant startsAt, Instant endsAt, String departmentApprovalRef) {
+        this(title, description, eventType, expectedAttendance, startsAt, endsAt, departmentApprovalRef, null);
     }
 
     /**

@@ -20,7 +20,11 @@
   <section class="card">
     <dl class="facts">
       <dt>Club</dt><dd th:text="${r.clubName()}">Club</dd>
-      <dt>Venue</dt><dd th:text="${r.venueName()} + ' (seats ' + ${r.venueCapacity()} + ')'">Venue</dd>
+      <dt>Venue</dt>
+      <dd>
+        <span th:text="${r.venueName()} + ' (seats ' + ${r.venueCapacity()} + ')'">Venue</span>
+        · <a th:href="@{/calendar(month=${r.calendarMonth()}, venue=${r.venueId()})}">See it on the calendar</a>
+      </dd>
       <dt>When</dt><dd th:text="${r.dateLabel()} + ', ' + ${r.timeLabel()}">Date, time</dd>
       <dt>Type</dt><dd th:text="${r.eventTypeLabel()}">Type</dd>
       <th:block th:if="${r.departmentApprovalRef() != null}">

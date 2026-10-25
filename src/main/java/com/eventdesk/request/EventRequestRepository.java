@@ -19,6 +19,14 @@ public interface EventRequestRepository extends JpaRepository<EventRequest, Long
     @EntityGraph(attributePaths = {"club", "venue"})
     List<EventRequest> findByStatusInAndEndsAtAfterOrderByStartsAtAsc(Collection<RequestStatus> statuses, Instant after);
 
+    /** Month calendar: bookings overlapping [from, to), i.e. starting before `to` and ending after `from`. */
+    @EntityGraph(attributePaths = {"club", "venue"})
+    List<EventRequest> findByStatusInAndStartsAtBeforeAndEndsAtAfterOrderByStartsAtAsc(
+            Collection<RequestStatus> statuses, Instant to, Instant from);
+
+    /** The next booking that hasn't finished, to open the calendar on a month with something in it. */
+    Optional<EventRequest> findFirstByStatusInAndEndsAtAfterOrderByStartsAtAsc(Collection<RequestStatus> statuses, Instant after);
+
     /** Review queues: requests waiting at the given stages whose event hasn't started, longest-waiting first. */
     @EntityGraph(attributePaths = {"club", "venue"})
     List<EventRequest> findByStatusInAndStartsAtAfterOrderByStatusChangedAtAsc(

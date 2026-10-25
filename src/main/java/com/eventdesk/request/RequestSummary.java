@@ -31,6 +31,8 @@ public record RequestSummary(
         boolean canRemind,
         boolean canDecide,
         String waitingLabel,
-        String rejectionReason
-){
+        String rejectionReason,
+        long venueId,
+        String calendarMonth   // e.g. "2026-11": links to the hall's calendar for the event's month
+) {
 }

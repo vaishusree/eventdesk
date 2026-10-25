@@ -3,29 +3,100 @@
 <head th:replace="~{fragments :: head('Calendar')}"></head>
 <body>
 <header th:replace="~{fragments :: topbar(${user})}"></header>
-<main class="page">
-    <h1>Venue calendar</h1>
-    <p class="muted">
-        Every club's bookings, so you can see what's free before you ask.
-        A tentatively held hall is waiting for the hall reservation office.
-        Only <strong>Permission granted</strong> means the event may go ahead.
-    </p>
+<main class="page wide" th:with="grid=${view.grid()}">
+    <div class="cal-head">
+        <div>
+            <h1>Venue calendar</h1>
+            <p class="muted">Every club's bookings, so you can see what's free before you ask.</p>
+            <p class="muted small" th:if="${user.club}"
+               th:text="'To book, click + on a free day from ' + ${earliestLabel} + ' on. Requests need 30 days of notice.'">
+                To book, click + on a free day.
+            </p>
+        </div>
+        <form class="cal-filter" th:action="@{/calendar}" method="get">
+            <input type="hidden" name="month" th:value="${grid.month()}">
+            <label>Venue
+                <select name="venue" onchange="this.form.submit()">
+                    <option value="">All venues</option>
+                    <option th:each="v : ${venues}" th:value="${v.id}" th:text="${v.name}"
+                            th:selected="${v.id == view.venueId()}">Venue</option>
+                </select>
+            </label>
+            <noscript><button type="submit" class="secondary">Show</button></noscript>
+        </form>
+    </div>
     <div th:replace="~{fragments :: messages}"></div>
 
-    <p class="empty" th:if="${days.isEmpty()}">No upcoming bookings.</p>
-
-    <section class="day" th:each="day : ${days}">
-        <h2 th:text="${day.dateLabel()}">Thu 26 Nov 2026</h2>
-        <ul class="rows">
-            <li class="row" th:each="r : ${day.bookings()}">
-                <div class="when" th:text="${r.timeLabel()}">10:00 – 13:00</div>
-                <div class="what">
-                    <strong th:text="${r.venueName()}">Seminar Hall A</strong>
-                    <span class="muted" th:text="${r.title()} + ' · ' + ${r.clubName()}">Title · Club</span>
-                </div>
-                <span th:replace="~{fragments :: statuses(${r})}"></span>
-            </li>
+    <div class="cal-bar">
+        <div class="cal-nav">
+            <a class="secondary" th:href="@{/calendar(month=${grid.previous()}, venue=${view.venueId()})}"
+               aria-label="Previous month">‹</a>
+            <a class="secondary" th:href="@{/calendar(month=${view.thisMonth()}, venue=${view.venueId()})}">Today</a>
+            <a class="secondary" th:href="@{/calendar(month=${grid.next()}, venue=${view.venueId()})}"
+               aria-label="Next month">›</a>
+            <h2 th:text="${grid.monthLabel()}">November 2026</h2>
+        </div>
+        <ul class="legend">
+            <li><span class="swatch ok"></span>Permission granted</li>
+            <li><span class="swatch warn"></span>Waiting for approval</li>
+            <li th:if="${user.club}"><span class="swatch closed"></span>Too soon to request</li>
         </ul>
+    </div>
+
+    <!-- Month grid (tablet and desktop). -->
+    <div class="month" role="table" th:attr="aria-label=${grid.monthLabel()}">
+        <div class="month-row weekdays" role="row">
+            <div role="columnheader">Mon</div><div role="columnheader">Tue</div><div role="columnheader">Wed</div>
+            <div role="columnheader">Thu</div><div role="columnheader">Fri</div><div role="columnheader">Sat</div>
+            <div role="columnheader">Sun</div>
+        </div>
+        <div class="month-row" role="row" th:each="week : ${grid.weeks()}">
+            <div class="cell" role="cell" th:each="day : ${week.days()}"
+                 th:classappend="${(day.inMonth() ? '' : ' outside') + (day.today() ? ' today' : '') + (user.club and day.date().isBefore(earliest) ? ' closed' : '')}">
+                <div class="cell-top">
+                    <span class="date" th:text="${day.dayOfMonth()}">1</span>
+                    <a class="add" th:if="${user.club and !day.date().isBefore(earliest)}"
+                       th:href="@{/club/requests/new(date=${day.date()}, venue=${view.venueId()})}"
+                       th:title="'Request a hall on ' + ${day.date()}"
+                       th:attr="aria-label='Request a hall on ' + ${day.date()}">+</a>
+                </div>
+                <th:block th:each="e : ${day.entries()}">
+                    <a class="chip" th:if="${e.linkable()}" th:href="@{/requests/{id}(id=${e.id()})}"
+                       th:classappend="${e.tone() + (e.continued() ? ' continued' : '')}"
+                       th:title="${e.title() + ' · ' + e.clubName() + ' · ' + e.venueName()}">
+                        <span class="chip-time" th:text="${e.continued() ? 'cont.' : e.startLabel()}">10:00</span>
+                        <span th:text="${e.title()}">Title</span>
+                    </a>
+                    <span class="chip" th:unless="${e.linkable()}"
+                          th:classappend="${e.tone() + (e.continued() ? ' continued' : '')}"
+                          th:title="${e.title() + ' · ' + e.clubName() + ' · ' + e.venueName()}">
+                        <span class="chip-time" th:text="${e.continued() ? 'cont.' : e.startLabel()}">10:00</span>
+                        <span th:text="${e.title()}">Title</span>
+                    </span>
+                </th:block>
+            </div>
+        </div>
+    </div>
+
+    <!-- The same month as a list: full status for each booking. Phones see only this. -->
+    <section class="agenda">
+        <h2 th:text="'Bookings in ' + ${grid.monthLabel()}">Bookings in November 2026</h2>
+        <p class="empty" th:if="${view.agenda().isEmpty()}">
+            No bookings this month. Use ‹ › to look at other months.
+        </p>
+        <section class="day" th:each="day : ${view.agenda()}">
+            <h3 th:text="${day.dateLabel()}">Thu 26 Nov 2026</h3>
+            <ul class="rows">
+                <li class="row" th:each="r : ${day.bookings()}">
+                    <div class="when" th:text="${r.timeLabel()}">10:00 – 13:00</div>
+                    <div class="what">
+                        <strong th:text="${r.venueName()}">Seminar Hall A</strong>
+                        <span class="muted" th:text="${r.title()} + ' · ' + ${r.clubName()}">Title · Club</span>
+                    </div>
+                    <span th:replace="~{fragments :: statuses(${r})}"></span>
+                </li>
+            </ul>
+        </section>
     </section>
 </main>
 </body>

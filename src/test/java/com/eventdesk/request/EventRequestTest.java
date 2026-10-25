@@ -149,7 +149,8 @@ class EventRequestTest {
     @Test
     void otherEventTypesCanOmitAttendance() {
         for (EventType uncounted : new EventType[] {EventType.CULTURAL, EventType.WEBINAR, EventType.OTHER}) {
-            EventDetails noCount = new EventDetails("Title", "desc", uncounted, null, EVENT_START, EVENT_END);
+            EventDetails noCount = new EventDetails("Title", "desc", uncounted, null, EVENT_START, EVENT_END,
+                    null, uncounted == EventType.OTHER ? "Alumni meet" : null);
             EventRequest request = EventRequest.submit(codingCoordinator, seminarHall, noCount, NOW);
 
             assertNull(request.getExpectedAttendance());
