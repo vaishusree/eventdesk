@@ -38,6 +38,7 @@
 <span th:fragment="statuses(r)" class="statuses">
     <span class="tag" th:classappend="${r.hallTone()}" th:text="${r.hallLabel()}">Hall</span>
     <span class="tag" th:classappend="${r.permissionTone()}" th:text="${r.permissionLabel()}">Permission</span>
+    <span class="tag info" th:if="${r.extended()}">Extended event</span>
     <span class="tag bad" th:if="${r.escalated()}">Escalated</span>
     <span class="tag warn" th:if="${r.overdue() and !r.escalated()}">Overdue</span>
 </span>
@@ -55,6 +56,8 @@
     </div>
     <p class="alert info small" th:if="${r.overCapacity()}"
        th:text="'Expected attendance (' + ${r.expectedAttendance()} + ') is more than the venue seats (' + ${r.venueCapacity()} + ').'">Over capacity</p>
+    <p class="alert warn small" th:if="${r.extended()}"
+       th:text="'Extended event (overnight or over 12 hours). Department approval: ' + ${r.departmentApprovalRef()}">Extended</p>
     <div class="actions" th:if="${r.canDecide()}">
         <form th:action="@{/review/{id}/approve(id=${r.id()})}" method="post">
             <input type="hidden" name="returnTo" th:value="${returnTo}">

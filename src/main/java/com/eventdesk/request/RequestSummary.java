@@ -25,6 +25,8 @@ public record RequestSummary(
         boolean overdue,
         boolean escalated,
         boolean overCapacity,
+        boolean extended,
+        String departmentApprovalRef,
         boolean canCancel,
         boolean canRemind,
         boolean canDecide,

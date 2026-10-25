@@ -51,11 +51,22 @@ public class NewRequestForm {
     @DateTimeFormat(pattern = "HH:mm")
     private LocalTime endTime;
 
+    /** Only for events that end on a later day (e.g. 24-hour hackathons); empty means same day. */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate endDate;
+
+    @Size(max = 100, message = "Keep the approval reference under 100 characters")
+    private String departmentApprovalRef;
+
     /** Converts the form's local date and times into instants in the college's time zone. */
+    /** Converts the form's local dates and times into instants in the college's time zone. */
+    /** Converts the form's local dates and times into instants in the college's time zone. */
     public EventDetails toDetails(ZoneId zone) {
+        LocalDate lastDay = endDate != null ? endDate : date;
         return new EventDetails(title, description, eventType, expectedAttendance,
                 date.atTime(startTime).atZone(zone).toInstant(),
-                date.atTime(endTime).atZone(zone).toInstant());
+                lastDay.atTime(endTime).atZone(zone).toInstant(),
+                departmentApprovalRef);
     }
 
     public String getTitle() { return title; }
@@ -81,4 +92,10 @@ public class NewRequestForm {
 
     public LocalTime getEndTime() { return endTime; }
     public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
+
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public String getDepartmentApprovalRef() { return departmentApprovalRef; }
+    public void setDepartmentApprovalRef(String departmentApprovalRef) { this.departmentApprovalRef = departmentApprovalRef; }
 }

@@ -41,6 +41,8 @@ public class RequestQueryService {
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH);
     private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.ENGLISH);
 
+    private static final DateTimeFormatter END_DAY = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH);
+
     /** Escalated first (event is close), then whoever has waited longest. */
     private static final Comparator<RequestSummary> URGENCY =
             Comparator.comparing(RequestSummary::escalated).reversed();
@@ -207,6 +209,12 @@ public class RequestQueryService {
     private RequestSummary summarize(EventRequest request, AppUser viewer, Instant now) {
         ZonedDateTime start = request.getStartsAt().atZone(zone);
         ZonedDateTime end = request.getEndsAt().atZone(zone);
+        boolean extended = !OperatingHours.within(request.getStartsAt(), request.getEndsAt(), zone)
+                || Duration.between(request.getStartsAt(), request.getEndsAt())
+                .compareTo(EventRequest.MAX_DURATION) > 0;
+        String timeLabel = start.toLocalDate().equals(end.toLocalDate())
+                ? TIME.format(start) + " – " + TIME.format(end)
+                : TIME.format(start) + " → " + END_DAY.format(end) + " " + TIME.format(end);
         HallStatus hall = request.hallStatus(now);
         PermissionStatus permission = request.permissionStatus(now);
         boolean owner = viewer != null && request.isOwnedBy(viewer);
@@ -220,7 +228,7 @@ public class RequestQueryService {
                 request.getEventType().label(),
                 request.getExpectedAttendance(),
                 DATE.format(start),
-                TIME.format(start) + " – " + TIME.format(end),
+                timeLabel,
                 request.isExpired(now) ? "Expired" : request.getStatus().label(),
                 hall.label(),
                 toneOf(hall),
@@ -229,6 +237,8 @@ public class RequestQueryService {
                 request.isOverdue(now),
                 request.isEscalated(now),
                 request.exceedsVenueCapacity(),
+                extended,
+                request.getDepartmentApprovalRef(),
                 owner && request.getStatus().holdsVenue() && request.getStartsAt().isAfter(now),
                 owner && request.canRemind(viewer, now),
                 viewer != null && request.canBeReviewedBy(viewer, now),

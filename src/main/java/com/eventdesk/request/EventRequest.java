@@ -52,6 +52,9 @@ public class EventRequest {
     /** College rule: clubs must request at least this long before the event. */
     public static final Duration MIN_NOTICE = Duration.ofDays(30);
     static final Duration MAX_DURATION = Duration.ofHours(12);
+    /** Extended technical events (e.g. 24-hour hackathons) with department approval. */
+    public static final Duration MAX_EXTENDED_DURATION = Duration.ofHours(36);
+    static final int MAX_APPROVAL_REF_LENGTH = 100;
     static final int MAX_REMARK_LENGTH = 500;
     /** A pending request is overdue once it has waited this long at its current stage. */
     public static final Duration OVERDUE_AFTER = Duration.ofDays(2);
@@ -106,6 +109,10 @@ public class EventRequest {
     @Column(name = "rejection_reason", length = MAX_REMARK_LENGTH)
     private String rejectionReason;
 
+    /** Department approval for an extended technical event (e.g. HOD letter number); otherwise null. */
+    @Column(name = "department_approval_ref", length = MAX_APPROVAL_REF_LENGTH)
+    private String departmentApprovalRef;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -144,6 +151,7 @@ public class EventRequest {
         this.expectedAttendance = details.expectedAttendance();
         this.startsAt = details.startsAt();
         this.endsAt = details.endsAt();
+        this.departmentApprovalRef = details.allowsExtendedHours() ? details.departmentApprovalRef().strip() : null;
         this.status = RequestStatus.PENDING_VENUE;
         this.createdAt = now;
         this.updatedAt = now;
@@ -182,12 +190,37 @@ public class EventRequest {
             throw new InvalidRequestException("Requests must be submitted at least "
                     + MIN_NOTICE.toDays() + " days before the event");
         }
-        if (Duration.between(details.startsAt(), details.endsAt()).compareTo(MAX_DURATION) > 0) {
-            throw new InvalidRequestException("A single booking can be at most " + MAX_DURATION.toHours() + " hours long");
-        }
+        validateDuration(details);
         validateAttendance(details.eventType(), details.expectedAttendance());
     }
-
+    /**
+     * Standard events last at most 12 hours. Technical events may run up to
+     * 36 hours (24-hour hackathons) if the club gives the department's
+     * approval reference; reviewers then see the event flagged as extended.
+     */
+    private static void validateDuration(EventDetails details) {
+        Duration length = Duration.between(details.startsAt(), details.endsAt());
+        if (details.departmentApprovalRef() != null
+                && details.departmentApprovalRef().strip().length() > MAX_APPROVAL_REF_LENGTH) {
+            throw new InvalidRequestException("The department approval reference can be at most "
+                    + MAX_APPROVAL_REF_LENGTH + " characters");
+        }
+        if (length.compareTo(MAX_DURATION) <= 0) {
+            return;
+        }
+        if (details.eventType() != EventType.TECHNICAL) {
+            throw new InvalidRequestException("A booking can be at most " + MAX_DURATION.toHours()
+                    + " hours long. Only technical events (such as hackathons) can run longer.");
+        }
+        if (!details.allowsExtendedHours()) {
+            throw new InvalidRequestException("Technical events longer than " + MAX_DURATION.toHours()
+                    + " hours need the department's approval. Enter its approval reference.");
+        }
+        if (length.compareTo(MAX_EXTENDED_DURATION) > 0) {
+            throw new InvalidRequestException("Even extended technical events can be at most "
+                    + MAX_EXTENDED_DURATION.toHours() + " hours long");
+        }
+    }
     /**
      * The expected count is an estimate, required for event types the college
      * counts (technical events and workshops) and optional otherwise.
@@ -500,6 +533,10 @@ public class EventRequest {
 
     public String getRejectionReason() {
         return rejectionReason;
+    }
+
+    public String getDepartmentApprovalRef() {
+        return departmentApprovalRef;
     }
 
     public Instant getCreatedAt() {

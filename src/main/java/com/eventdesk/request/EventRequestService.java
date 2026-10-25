@@ -10,6 +10,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneId;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.List;
 
 import java.time.Clock;
 
@@ -100,6 +103,22 @@ public class EventRequestService {
         EventRequest request = findRequest(requestId);
         request.remind(findUser(actorId), clock.instant());
         requests.saveAndFlush(request);
+    }
+
+    /**
+     * Marks every request that is still pending after its start time as
+     * EXPIRED (a system action in the audit trail). The stored status change
+     * takes it out of the overlap constraint, so the slot is freed in the
+     * database too. Called by ExpirySweeper; returns how many expired.
+     */
+    @Transactional
+    public int expireDue() {
+        Instant now = clock.instant();
+        List<EventRequest> due = requests.findByStatusInAndStartsAtLessThanEqual(
+                EnumSet.of(RequestStatus.PENDING_VENUE, RequestStatus.PENDING_DEAN), now);
+        due.forEach(request -> request.expire(now));
+        requests.saveAll(due);
+        return due.size();
     }
 
     /** The exclusion constraint's name appears in PostgreSQL's error message. */

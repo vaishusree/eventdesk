@@ -65,6 +65,26 @@
             </label>
         </div>
 
+        <details class="extended" th:open="${form.endDate != null or form.departmentApprovalRef != null and !#strings.isEmpty(form.departmentApprovalRef)}">
+            <summary>Overnight or longer than 12 hours? (technical events only)</summary>
+            <p class="hint">
+                For events such as 24-hour hackathons. Technical events may run up to 36 hours
+                or outside 07:00–22:00 with the department's approval, which reviewers will see.
+            </p>
+            <div class="grid-2">
+                <label>End date
+                    <input type="date" th:field="*{endDate}" th:attr="min=${minDate}">
+                    <span class="hint">Leave empty if the event ends on the same day.</span>
+                    <span class="field-error" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></span>
+                </label>
+                <label>Department approval reference
+                    <input type="text" th:field="*{departmentApprovalRef}" maxlength="100"
+                           placeholder="e.g. CSE/HOD/2026/114">
+                    <span class="field-error" th:if="${#fields.hasErrors('departmentApprovalRef')}" th:errors="*{departmentApprovalRef}"></span>
+                </label>
+            </div>
+        </details>
+
         <div class="actions">
             <button type="submit" class="primary">Submit request</button>
             <a th:href="@{/club/requests}">Cancel</a>

@@ -159,3 +159,8 @@ button { font: inherit; cursor: pointer; }
 .card + .card { margin-top: 1rem; }
 .history { margin: 0; padding-left: 1.2rem; display: grid; gap: .6rem; }
 .history .remark { margin-top: .15rem; color: var(--muted); font-style: italic; }
+
+/* ---- Extended events section of the request form ---- */
+details.extended { border: 1px dashed var(--border); border-radius: var(--radius); padding: .6rem .9rem; }
+details.extended summary { cursor: pointer; font-weight: 600; }
+details.extended[open] summary { margin-bottom: .6rem; }

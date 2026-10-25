@@ -23,6 +23,9 @@
       <dt>Venue</dt><dd th:text="${r.venueName()} + ' (seats ' + ${r.venueCapacity()} + ')'">Venue</dd>
       <dt>When</dt><dd th:text="${r.dateLabel()} + ', ' + ${r.timeLabel()}">Date, time</dd>
       <dt>Type</dt><dd th:text="${r.eventTypeLabel()}">Type</dd>
+      <th:block th:if="${r.departmentApprovalRef() != null}">
+        <dt>Department approval</dt><dd th:text="${r.departmentApprovalRef()}">Ref</dd>
+      </th:block>
       <dt>Expected attendance</dt>
       <dd th:text="${r.expectedAttendance() != null ? r.expectedAttendance() : 'Not given'}">120</dd>
       <dt>Submitted</dt><dd th:text="${detail.submittedLabel()} + ' by ' + ${detail.submittedByName()}">When by whom</dd>

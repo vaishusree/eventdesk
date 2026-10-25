@@ -31,4 +31,7 @@ public interface EventRequestRepository extends JpaRepository<EventRequest, Long
     /** A club's own requests, newest event first. */
     @EntityGraph(attributePaths = {"club", "venue"})
     List<EventRequest> findByClubIdOrderByStartsAtDesc(Long clubId);
+
+    /** Expiry sweep: requests still waiting for a decision whose event has already started. */
+    List<EventRequest> findByStatusInAndStartsAtLessThanEqual(Collection<RequestStatus> statuses, Instant now);
 }
