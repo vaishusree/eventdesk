@@ -24,6 +24,7 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+
 body {
     margin: 0;
     font-family: var(--font-body);
@@ -222,9 +223,10 @@ details.extended[open] summary { margin-bottom: .6rem; }
     display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
     margin: 1.5rem 0 .75rem;
 }
-.cal-nav { display: flex; align-items: center; gap: .4rem; }
+.cal-nav { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
 .cal-nav .secondary { padding: .35rem .8rem; }
-.cal-nav h2 { margin: 0 0 0 .6rem; font-size: 1.45rem; }
+.cal-nav h2 { margin: 0 .2rem; font-size: 1.45rem; min-width: 10.5rem; text-align: center; }
+.cal-nav .link { margin-left: .4rem; }
 .legend { list-style: none; margin: 0; padding: 0; display: flex; gap: 1rem; font-size: .86rem; color: var(--muted); }
 .legend li { display: flex; align-items: center; gap: .4rem; }
 .swatch { width: .8rem; height: .8rem; border-radius: 3px; }

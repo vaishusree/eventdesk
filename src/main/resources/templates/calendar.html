@@ -30,11 +30,12 @@
     <div class="cal-bar">
         <div class="cal-nav">
             <a class="secondary" th:href="@{/calendar(month=${grid.previous()}, venue=${view.venueId()})}"
-               aria-label="Previous month">‹</a>
-            <a class="secondary" th:href="@{/calendar(month=${view.thisMonth()}, venue=${view.venueId()})}">Today</a>
-            <a class="secondary" th:href="@{/calendar(month=${grid.next()}, venue=${view.venueId()})}"
-               aria-label="Next month">›</a>
+               th:text="'‹ ' + ${grid.previousLabel()}" aria-label="Previous month">‹ Oct</a>
             <h2 th:text="${grid.monthLabel()}">November 2026</h2>
+            <a class="secondary" th:href="@{/calendar(month=${grid.next()}, venue=${view.venueId()})}"
+               th:text="${grid.nextLabel()} + ' ›'" aria-label="Next month">Dec ›</a>
+            <a class="link small" th:unless="${grid.month().equals(view.thisMonth())}"
+               th:href="@{/calendar(month=${view.thisMonth()}, venue=${view.venueId()})}">Back to this month</a>
         </div>
         <ul class="legend">
             <li><span class="swatch ok"></span>Permission granted</li>

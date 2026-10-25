@@ -109,6 +109,8 @@ class MonthGridTest {
 
         assertEquals(YearMonth.of(2026, 10), grid.previous());
         assertEquals(YearMonth.of(2026, 12), grid.next());
+        assertEquals("Oct", grid.previousLabel());
+        assertEquals("Dec", grid.nextLabel());
         assertTrue(grid.isEmpty());
     }
 }

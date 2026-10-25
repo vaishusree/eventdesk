@@ -39,4 +39,12 @@ class OperatingHoursTest {
         assertThrows(InvalidRequestException.class,
                 () -> OperatingHours.check(at(LocalTime.of(20, 0), LocalTime.of(22, 1)), IST));
     }
+
+    @Test
+    void endingAtMidnightIsRejected() {
+        // 20:00 to 00:00 runs two hours past closing time, even though the clock reads 00:00
+        EventDetails toMidnight = new EventDetails("t", "d", EventType.OTHER, null,
+                DAY.atTime(20, 0).atZone(IST).toInstant(), DAY.plusDays(1).atStartOfDay(IST).toInstant());
+        assertThrows(InvalidRequestException.class, () -> OperatingHours.check(toMidnight, IST));
+    }
 }

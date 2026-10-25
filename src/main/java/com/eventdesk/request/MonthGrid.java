@@ -21,7 +21,7 @@ import java.util.Map;
 public record MonthGrid(YearMonth month, String monthLabel, List<Week> weeks) {
 
     private static final DateTimeFormatter LABEL = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH);
-
+    private static final DateTimeFormatter SHORT = DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH);
     public record Week(List<Day> days) {
     }
 
@@ -92,6 +92,17 @@ public record MonthGrid(YearMonth month, String monthLabel, List<Week> weeks) {
 
     public YearMonth next() {
         return month.plusMonths(1);
+    }
+
+
+    /** Short name of the previous month for the ‹ button, e.g. "Oct". */
+    public String previousLabel() {
+        return SHORT.format(previous());
+    }
+
+    /** Short name of the next month for the › button, e.g. "Dec". */
+    public String nextLabel() {
+        return SHORT.format(next());
     }
 
     public boolean isEmpty() {

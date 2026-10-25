@@ -2,7 +2,7 @@
 
 Venue booking and event approval for college clubs, in one place instead of an email chain.
 
-**Live:** https://YOUR-APP.onrender.com — free tier, so the first load after a quiet spell can take about a minute while the server wakes up.
+**Live:** https://eventdesk.onrender.com/ — free tier, so the first load after a quiet spell can take about a minute while the server wakes up.
 
 ## The problem
 
@@ -16,7 +16,7 @@ At VIT-AP, getting a club event approved happens over email. The club writes to 
 
 ## What it does
 
-- **Shared venue calendar**: a month view of every club's bookings, filterable by venue, so clubs see what's free before they ask.
+- **Shared venue calendar**: a month view of every club's bookings, filterable by venue, so clubs see what's free before they ask. A club clicks **+** on a day to start a request for that date; days inside the 30-day notice period are greyed out.
 - **One request form** for the venue and the event details, with the college's rules built in: at least 30 days' notice, 07:00–22:00, at most 12 hours. An attendance estimate is required for technical events and workshops.
 - **Two approvals in order**: the hall reservation office confirms the venue first, then the Dean grants permission. A rejection always carries a reason.
 - **Hall and permission shown separately**: "Hall confirmed · Permission pending" never reads as approved. Only the Dean's approval authorizes an event.
@@ -109,7 +109,8 @@ The `Dockerfile` builds the jar and runs it on a JRE image. On Render, create a 
 - **No notifications.** Clubs and reviewers find out about changes by opening EventDesk. Email on each status change and a daily overdue digest for reviewers are the next step.
 - **One venue per request.** A big event needing two halls takes two requests.
 - **Department approval is a reference field**, not its own approval stage.
-- **Fixed rules.** The notice period, hours and limits are constants in code, not settings an admin can change.
+- **Built for one college.** The halls, roles and rules (30-day notice, 07:00–22:00, a hall office then the Dean) follow VIT-AP's process. Another college would need its own seed data and rule changes, and the limits are constants in code, not settings an admin can change.
 - **Demo sign-in only.** There is no sign-up or college single sign-on, and accounts are seeded by a migration.
 - **Free-tier hosting.** The server sleeps when idle, so the first request takes about a minute. The expiry job only runs while the server is awake; until it runs, expiry is still computed from the clock, so pages are never wrong.
+- **Tests cover the approval rules, not the web layer.** Unit tests cover the request state machine, deadlines, escalation, expiry, extended events and the calendar layout. The controllers and pages have no automated tests, and the one full-app test (`EventdeskApplicationTests`) needs Docker for its PostgreSQL container.
 - **Faculty judge invitations** for technical events are not built yet.
